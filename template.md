@@ -1,12 +1,12 @@
 # About
 This tool will daily crawl https://arxiv.org and use LLMs to summarize them.
 
-See in: https://dw-dengwei.github.io/daily-arXiv-ai-enhanced/
+See in: https://mccoylee.github.io/daily-arXiv-ai-enhanced/
 
 # How to use
 This repo will daily crawl arXiv papers about **cs.CV, cs.GR and cs.CL**, and use **DeepSeek** to summarize the papers in **Chinese**.
 If you wish to crawl other arXiv categories, use other LLMs or other languages, please follow the bellow instructions.
-Otherwise, you can directly use this repo in https://dw-dengwei.github.io/daily-arXiv-ai-enhanced/ . Please star it if you like :)
+Otherwise, you can directly use this repo in https://mccoylee.github.io/daily-arXiv-ai-enhanced/ . Please star it if you like :)
 
 **Instructions:**
 1. Fork this repo to your own account
@@ -35,8 +35,8 @@ You can modify it in `.github/workflows/run.yml`
 {readme_content}
 
 # Related tools
-- ICML, ICLR, NeurIPS list: https://dw-dengwei.github.io/OpenReview-paper-list/index.html
+- ICML, ICLR, NeurIPS list: https://mccoylee.github.io/OpenReview-paper-list/index.html
 
 # Star history
 
-[![Star History Chart](https://api.star-history.com/svg?repos=dw-dengwei/daily-arXiv-ai-enhanced&type=Date)](https://www.star-history.com/#dw-dengwei/daily-arXiv-ai-enhanced&Date)
+[![Star History Chart](https://api.star-history.com/svg?repos=McCoyLee/daily-arXiv-ai-enhanced&type=Date)](https://www.star-history.com/#McCoyLee/daily-arXiv-ai-enhanced&Date)
