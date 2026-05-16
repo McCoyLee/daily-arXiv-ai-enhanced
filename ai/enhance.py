@@ -24,19 +24,24 @@ def parse_args():
 
 
 def is_sensitive(content: str) -> bool:
+    """Fail-open sensitive check: checker outage should not drop all papers."""
+    spam_check_url = os.environ.get("SPAM_CHECK_URL", "")
+    if not spam_check_url:
+        return False
+
     try:
         resp = requests.post(
-            "https://spam-check.workers.dev",
+            spam_check_url,
             json={"text": content},
             timeout=5,
         )
         if resp.status_code == 200:
-            return resp.json().get("sensitive", True)
-        print(f"Sensitive check failed with status {resp.status_code}", file=sys.stderr)
-        return True
+            return resp.json().get("sensitive", False)
+        print(f"[WARN] Sensitive check failed with status {resp.status_code}, url={spam_check_url}", file=sys.stderr)
+        return False
     except Exception as exc:
-        print(f"Sensitive check error: {exc}", file=sys.stderr)
-        return True
+        print(f"[WARN] Sensitive check error (fail-open), url={spam_check_url}, error={exc}", file=sys.stderr)
+        return False
 
 
 def check_github_code(content: str) -> Dict:
