@@ -3,7 +3,7 @@ name = "daily-arxiv"
 version = "0.1.0"
 description = "Daily crawl arXiv papers and use LLMs to summarize them"
 authors = [
-    {name = "Wei Deng", email = "dw-dengwei@outlook.com"},
+    {name = "Wei Deng", email = "mccoylee@users.noreply.github.com"},
     {name = "Jian Guan", email = "jianguanthu@gmail.com"},
 ]
 readme = "README.md"

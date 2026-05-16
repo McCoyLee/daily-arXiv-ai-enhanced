@@ -13,7 +13,7 @@ description: 通过URL请求，从daily-arxiv-ai-enhanced项目中获取论文js
 通过URL参数获取JSON格式的arXiv论文数据
 
 ## 基础仓库 URL
-https://dw-dengwei.github.io/daily-arXiv-ai-enhanced/
+https://mccoylee.github.io/daily-arXiv-ai-enhanced/
 
 ## URL参数
 
@@ -25,7 +25,7 @@ https://dw-dengwei.github.io/daily-arXiv-ai-enhanced/
 
 ## 样例
 ```
-bash scripts/fetch.sh "https://dw-dengwei.github.io/daily-arXiv-ai-enhanced/?category=cs.CV&author=Smith&keywords=deep"
+bash scripts/fetch.sh "https://mccoylee.github.io/daily-arXiv-ai-enhanced/?category=cs.CV&author=Smith&keywords=deep"
 ```
 这里使用到了`fetch.sh`脚本来发送请求并处理响应数据，该脚本基于NodeJS和puppeteer环境，如果没有安装则会自动安装。你不能直接wget或curl这个url，因为它需要执行JavaScript来生成最终的JSON响应。
 
