@@ -152,13 +152,13 @@ def process_all_items(data: List[Dict], model_name: str, language: str, max_work
             "tldr, motivation, method, result, conclusion. Include all keys even if uncertain. "
             "Use concise text.\n"
             "json example:\n"
-            "{\n"
+            "{{\n"
             "  \"tldr\": \"...\",\n"
             "  \"motivation\": \"...\",\n"
             "  \"method\": \"...\",\n"
             "  \"result\": \"...\",\n"
             "  \"conclusion\": \"...\"\n"
-            "}\n"
+            "}}\n"
             "Abstract:\n{content}"
         ),
     ])
