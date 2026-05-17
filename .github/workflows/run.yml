@@ -29,36 +29,47 @@ jobs:
       run: |
         source .venv/bin/activate
         today=$(date -u "+%Y-%m-%d")
-        echo "开始爬取 $today 的arXiv论文... / Starting to crawl $today arXiv papers..."
-        
-        # 检查今日文件是否已存在，如存在则删除 / Check if today's file exists, delete if found
-        if [ -f "data/${today}.jsonl" ]; then
-            echo "🗑️ 删除旧文件 data/${today}.jsonl"
-            rm -f "data/${today}.jsonl"
-        fi
-        rm -f "data/${today}_AI_enhanced_${{ vars.LANGUAGE }}.jsonl"
-        rm -f "data/${today}.md"
-        
-        cd daily_arxiv
-        export OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
-        export OPENAI_BASE_URL=${{ secrets.OPENAI_BASE_URL }}
-        export TOKEN_GITHUB=${{ secrets.TOKEN_GITHUB }}
+        echo "开始获取 $today 的arXiv论文... / Starting to fetch $today arXiv papers..."
+
         export LANGUAGE="${{ vars.LANGUAGE }}"
-        export CATEGORIES="${{ vars.CATEGORIES }}"
-        export MODEL_NAME="${{ vars.MODEL_NAME }}"
-        
-        # 使用Scrapy爬取
-        # Use Scrapy to crawl
-        scrapy crawl arxiv -o ../data/${today}.jsonl
-        
-        # 检查爬取是否成功 / Check if crawling was successful
-        if [ ! -f "../data/${today}.jsonl" ]; then
-            echo "爬取失败，未生成数据文件 / Crawling failed, no data file generated"
+
+        rm -f "data/${today}.jsonl"
+        rm -f "data/${today}_AI_enhanced_${LANGUAGE}.jsonl"
+        rm -f "data/${today}.md"
+
+        if [ "${{ vars.PAPER_SOURCE }}" = "email" ]; then
+            echo "Using email source (IMAP)"
+            export EMAIL_USERNAME="${{ secrets.EMAIL_USERNAME }}"
+            export EMAIL_APP_PASSWORD="${{ secrets.EMAIL_APP_PASSWORD }}"
+            export EMAIL_IMAP_HOST="${{ secrets.EMAIL_IMAP_HOST }}"
+            export EMAIL_IMAP_PORT="${{ secrets.EMAIL_IMAP_PORT }}"
+            export ARXIV_EMAIL_FROM="${{ vars.ARXIV_EMAIL_FROM }}"
+            export ARXIV_EMAIL_SUBJECT_KEYWORD="${{ vars.ARXIV_EMAIL_SUBJECT_KEYWORD }}"
+            export INCLUDE_REPLACEMENTS="${{ vars.INCLUDE_REPLACEMENTS }}"
+            export INCLUDE_CROSS_LISTINGS="${{ vars.INCLUDE_CROSS_LISTINGS }}"
+
+            python daily_arxiv/email_ingest.py \
+                --date "$today" \
+                --out "data/${today}.jsonl"
+        else
+            echo "Using scrapy source (fallback)"
+            cd daily_arxiv
+            export OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
+            export OPENAI_BASE_URL=${{ secrets.OPENAI_BASE_URL }}
+            export TOKEN_GITHUB=${{ secrets.TOKEN_GITHUB }}
+            export CATEGORIES="${{ vars.CATEGORIES }}"
+            export MODEL_NAME="${{ vars.MODEL_NAME }}"
+            scrapy crawl arxiv -o ../data/${today}.jsonl
+            cd ..
+        fi
+
+        if [ ! -f "data/${today}.jsonl" ]; then
+            echo "获取失败，未生成数据文件 / Fetch failed, no data file generated"
             exit 1
         fi
-        
+
         echo "crawl_date=$today" >> $GITHUB_OUTPUT
-        echo "爬取完成 / Crawling completed"
+        echo "获取完成 / Fetch completed"
         
     - name: Check for duplicates
       id: dedup_check
