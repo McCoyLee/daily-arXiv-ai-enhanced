@@ -60,6 +60,11 @@ Otherwise, you can directly use this repo in https://mccoylee.github.io/daily-ar
    3. `MODEL_NAME`: such as "deepseek-chat"
    4. `EMAIL`: your email for push to GitHub
    5. `NAME`: your name for push to GitHub
+   6. [Optional, recommended] `PAPER_SOURCE`: set to `email` to ingest papers from the arXiv daily mailing-list email instead of crawling arXiv (avoids HTTP 429). Leave unset / any other value to keep the legacy Scrapy crawler as a fallback.
+   7. [Required when `PAPER_SOURCE=email`] `ARXIV_EMAIL_FROM`: sender filter, e.g. `arxiv` or `no-reply@arxiv.org`.
+   8. [Required when `PAPER_SOURCE=email`] `ARXIV_EMAIL_SUBJECT_KEYWORD`: subject filter, e.g. `stat.ME` or `arXiv`.
+   9. [Optional] `INCLUDE_REPLACEMENTS` (default `false`) and `INCLUDE_CROSS_LISTINGS` (default `true`).
+   10. [Required when `PAPER_SOURCE=email`] In Secrets, also set `EMAIL_USERNAME`, `EMAIL_APP_PASSWORD`, `EMAIL_IMAP_HOST` (e.g. `mail.ustc.edu.cn`) and `EMAIL_IMAP_PORT` (typically `993`).
 8. Go to your-own-repo -> Actions -> arXiv-daily-ai-enhanced
 9. You can manually click **Run workflow** to test if it works well (it may take about one hour). By default, this action will automatically run every day. You can modify it in `.github/workflows/run.yml`
 10. Set up GitHub pages: Go to your own repo -> Settings -> Pages. In `Build and deployment`, set `Source="Deploy from a branch"`, `Branch="main", "/(root)"`. Wait for a few minutes, go to https://\<username\>.github.io/daily-arXiv-ai-enhanced/. Please see this [issue](https://github.com/McCoyLee/daily-arXiv-ai-enhanced/issues/14) for more precise instructions.
