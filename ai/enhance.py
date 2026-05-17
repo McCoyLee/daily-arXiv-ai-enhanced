@@ -3,6 +3,7 @@ import json
 import os
 import re
 import sys
+import traceback
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Dict, List, Optional, Tuple
 
@@ -99,7 +100,25 @@ def parse_ai_json(raw_content: str, item_id: str, defaults: Dict[str, str]) -> T
     return ai_obj, None
 
 
-def process_single_item(llm, item: Dict, language: str, defaults: Dict[str, str], system_prompt: str, human_prompt_template: str) -> Tuple[Optional[Dict], bool]:
+def build_human_prompt(language: str, content: str) -> str:
+    example_json = json.dumps({
+        "tldr": "...",
+        "motivation": "...",
+        "method": "...",
+        "result": "...",
+        "conclusion": "...",
+    }, ensure_ascii=False, indent=2)
+    return (
+        f"Summarize the following arXiv abstract in {language}. Output MUST be json with keys: "
+        "tldr, motivation, method, result, conclusion. Include all keys even if uncertain. "
+        "Use concise text.\n"
+        "json example:\n"
+        f"{example_json}\n"
+        f"Abstract:\n{content}"
+    )
+
+
+def process_single_item(llm, item: Dict, language: str, defaults: Dict[str, str], system_prompt: str) -> Tuple[Optional[Dict], bool]:
     if is_sensitive(item.get("summary", "")):
         return None, False
 
@@ -108,11 +127,7 @@ def process_single_item(llm, item: Dict, language: str, defaults: Dict[str, str]
         item.update(code_info)
 
     try:
-        human_prompt = (
-            human_prompt_template
-            .replace("__LANGUAGE__", language)
-            .replace("__CONTENT__", item.get("summary", ""))
-        )
+        human_prompt = build_human_prompt(language, item.get("summary", ""))
         response = llm.invoke([("system", system_prompt), ("human", human_prompt)])
         raw = response.content if hasattr(response, "content") else ""
         if isinstance(raw, list):
@@ -123,7 +138,8 @@ def process_single_item(llm, item: Dict, language: str, defaults: Dict[str, str]
             print(f"[WARN] {warn}", file=sys.stderr)
         item["AI"] = ai_data
     except Exception as exc:
-        print(f"[ERROR] AI generation failed for {item.get('id', 'unknown')}: {exc}", file=sys.stderr)
+        print(f"[ERROR] AI generation failed for {item.get('id', 'unknown')}: {exc!r}", file=sys.stderr)
+        print(traceback.format_exc(), file=sys.stderr)
         item["AI"] = defaults.copy()
 
     for v in item.get("AI", {}).values():
@@ -146,20 +162,6 @@ def process_all_items(data: List[Dict], model_name: str, language: str, max_work
     print(f"Connect to: {model_name}", file=sys.stderr)
 
     system_prompt = "You are an expert research assistant. Return valid json only. Do not output markdown or code fences."
-    human_prompt_template = (
-        "Summarize the following arXiv abstract in __LANGUAGE__. Output MUST be json with keys: "
-        "tldr, motivation, method, result, conclusion. Include all keys even if uncertain. "
-        "Use concise text.\n"
-        "json example:\n"
-        "{\n"
-        "  \"tldr\": \"...\",\n"
-        "  \"motivation\": \"...\",\n"
-        "  \"method\": \"...\",\n"
-        "  \"result\": \"...\",\n"
-        "  \"conclusion\": \"...\"\n"
-        "}\n"
-        "Abstract:\n__CONTENT__"
-    )
     defaults = {
         "tldr": "Summary generation failed",
         "motivation": "Motivation analysis unavailable",
@@ -173,7 +175,7 @@ def process_all_items(data: List[Dict], model_name: str, language: str, max_work
 
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         future_to_idx = {
-            executor.submit(process_single_item, llm, item, language, defaults, system_prompt, human_prompt_template): idx
+            executor.submit(process_single_item, llm, item, language, defaults, system_prompt): idx
             for idx, item in enumerate(data)
         }
         for future in tqdm(as_completed(future_to_idx), total=len(data), desc="Processing items"):
