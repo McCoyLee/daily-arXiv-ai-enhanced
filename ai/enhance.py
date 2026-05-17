@@ -8,7 +8,6 @@ from typing import Dict, List, Optional, Tuple
 
 import dotenv
 import requests
-from langchain.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
 from tqdm import tqdm
 
@@ -100,7 +99,7 @@ def parse_ai_json(raw_content: str, item_id: str, defaults: Dict[str, str]) -> T
     return ai_obj, None
 
 
-def process_single_item(chain, item: Dict, language: str, defaults: Dict[str, str]) -> Tuple[Optional[Dict], bool]:
+def process_single_item(llm, item: Dict, language: str, defaults: Dict[str, str], system_prompt: str, human_prompt_template: str) -> Tuple[Optional[Dict], bool]:
     if is_sensitive(item.get("summary", "")):
         return None, False
 
@@ -109,7 +108,8 @@ def process_single_item(chain, item: Dict, language: str, defaults: Dict[str, st
         item.update(code_info)
 
     try:
-        response = chain.invoke({"language": language, "content": item.get("summary", "")})
+        human_prompt = human_prompt_template.format(language=language, content=item.get("summary", ""))
+        response = llm.invoke([("system", system_prompt), ("human", human_prompt)])
         raw = response.content if hasattr(response, "content") else ""
         if isinstance(raw, list):
             raw = "".join(block.get("text", "") if isinstance(block, dict) else str(block) for block in raw)
@@ -141,29 +141,21 @@ def process_all_items(data: List[Dict], model_name: str, language: str, max_work
     )
     print(f"Connect to: {model_name}", file=sys.stderr)
 
-    prompt = ChatPromptTemplate.from_messages([
-        (
-            "system",
-            "You are an expert research assistant. Return valid json only. Do not output markdown or code fences.",
-        ),
-        (
-            "human",
-            "Summarize the following arXiv abstract in {language}. Output MUST be json with keys: "
-            "tldr, motivation, method, result, conclusion. Include all keys even if uncertain. "
-            "Use concise text.\n"
-            "json example:\n"
-            "{{\n"
-            "  \"tldr\": \"...\",\n"
-            "  \"motivation\": \"...\",\n"
-            "  \"method\": \"...\",\n"
-            "  \"result\": \"...\",\n"
-            "  \"conclusion\": \"...\"\n"
-            "}}\n"
-            "Abstract:\n{content}"
-        ),
-    ])
-    chain = prompt | llm
-
+    system_prompt = "You are an expert research assistant. Return valid json only. Do not output markdown or code fences."
+    human_prompt_template = (
+        "Summarize the following arXiv abstract in {language}. Output MUST be json with keys: "
+        "tldr, motivation, method, result, conclusion. Include all keys even if uncertain. "
+        "Use concise text.\n"
+        "json example:\n"
+        "{\n"
+        "  \"tldr\": \"...\",\n"
+        "  \"motivation\": \"...\",\n"
+        "  \"method\": \"...\",\n"
+        "  \"result\": \"...\",\n"
+        "  \"conclusion\": \"...\"\n"
+        "}\n"
+        "Abstract:\n{content}"
+    )
     defaults = {
         "tldr": "Summary generation failed",
         "motivation": "Motivation analysis unavailable",
@@ -177,7 +169,7 @@ def process_all_items(data: List[Dict], model_name: str, language: str, max_work
 
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         future_to_idx = {
-            executor.submit(process_single_item, chain, item, language, defaults): idx
+            executor.submit(process_single_item, llm, item, language, defaults, system_prompt, human_prompt_template): idx
             for idx, item in enumerate(data)
         }
         for future in tqdm(as_completed(future_to_idx), total=len(data), desc="Processing items"):
