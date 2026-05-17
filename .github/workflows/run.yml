@@ -132,7 +132,8 @@ jobs:
         fi
 
         total_count=$(wc -l < "$AI_FILE")
-        fail_count=$(grep -c ""tldr": "Summary generation failed"" "$AI_FILE" || true)
+        fail_count=$(grep -c '"tldr": "Summary generation failed"' "$AI_FILE" || true)
+        fail_count=${fail_count:-0}
         if [ "$total_count" -gt 0 ]; then
             fail_ratio=$(( fail_count * 100 / total_count ))
             echo "AI失败统计: $fail_count/$total_count (${fail_ratio}%)"
