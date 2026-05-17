@@ -108,7 +108,11 @@ def process_single_item(llm, item: Dict, language: str, defaults: Dict[str, str]
         item.update(code_info)
 
     try:
-        human_prompt = human_prompt_template.format(language=language, content=item.get("summary", ""))
+        human_prompt = (
+            human_prompt_template
+            .replace("__LANGUAGE__", language)
+            .replace("__CONTENT__", item.get("summary", ""))
+        )
         response = llm.invoke([("system", system_prompt), ("human", human_prompt)])
         raw = response.content if hasattr(response, "content") else ""
         if isinstance(raw, list):
@@ -143,7 +147,7 @@ def process_all_items(data: List[Dict], model_name: str, language: str, max_work
 
     system_prompt = "You are an expert research assistant. Return valid json only. Do not output markdown or code fences."
     human_prompt_template = (
-        "Summarize the following arXiv abstract in {language}. Output MUST be json with keys: "
+        "Summarize the following arXiv abstract in __LANGUAGE__. Output MUST be json with keys: "
         "tldr, motivation, method, result, conclusion. Include all keys even if uncertain. "
         "Use concise text.\n"
         "json example:\n"
@@ -154,7 +158,7 @@ def process_all_items(data: List[Dict], model_name: str, language: str, max_work
         "  \"result\": \"...\",\n"
         "  \"conclusion\": \"...\"\n"
         "}\n"
-        "Abstract:\n{content}"
+        "Abstract:\n__CONTENT__"
     )
     defaults = {
         "tldr": "Summary generation failed",
