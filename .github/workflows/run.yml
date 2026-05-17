@@ -9,6 +9,9 @@ on:
   workflow_dispatch:
 
 
+permissions:
+  contents: write
+
 jobs:
   build:
 
@@ -30,12 +33,11 @@ jobs:
         
         # 检查今日文件是否已存在，如存在则删除 / Check if today's file exists, delete if found
         if [ -f "data/${today}.jsonl" ]; then
-            echo "🗑️ 发现今日文件已存在，正在删除重新生成... / Found existing today's file, deleting for fresh start..."
-            rm "data/${today}.jsonl"
-            echo "✅ 已删除现有文件：data/${today}.jsonl / Deleted existing file: data/${today}.jsonl"
-        else
-            echo "📝 今日文件不存在，准备新建... / Today's file doesn't exist, ready to create new one..."
+            echo "🗑️ 删除旧文件 data/${today}.jsonl"
+            rm -f "data/${today}.jsonl"
         fi
+        rm -f "data/${today}_AI_enhanced_${{ vars.LANGUAGE }}.jsonl"
+        rm -f "data/${today}.md"
         
         cd daily_arxiv
         export OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
@@ -111,6 +113,23 @@ jobs:
         export MODEL_NAME="${{ vars.MODEL_NAME }}"
         
         python enhance.py --data ../data/${today}.jsonl
+
+        AI_FILE="../data/${today}_AI_enhanced_${LANGUAGE}.jsonl"
+        if [ ! -f "$AI_FILE" ]; then
+            echo "AI增强文件不存在 / AI enhanced file missing"
+            exit 1
+        fi
+
+        total_count=$(wc -l < "$AI_FILE")
+        fail_count=$(grep -c ""tldr": "Summary generation failed"" "$AI_FILE" || true)
+        if [ "$total_count" -gt 0 ]; then
+            fail_ratio=$(( fail_count * 100 / total_count ))
+            echo "AI失败统计: $fail_count/$total_count (${fail_ratio}%)"
+            if [ "$fail_ratio" -gt 50 ]; then
+                echo "AI失败比例超过50%，终止部署 / AI failure ratio > 50%, abort"
+                exit 1
+            fi
+        fi
         
         # 检查AI处理是否成功 / Check if AI processing was successful
         if [ $? -ne 0 ]; then
@@ -226,6 +245,8 @@ jobs:
         
         # 注入仓库信息到 data-config.js / Inject repository info into data-config.js
         if [ -f "js/data-config.js" ]; then
+          sed -i "s/repoOwner: '[^']*'/repoOwner: '$REPO_OWNER'/g" js/data-config.js
+          sed -i "s/repoName: '[^']*'/repoName: '$REPO_NAME'/g" js/data-config.js
           sed -i "s/PLACEHOLDER_REPO_OWNER/$REPO_OWNER/g" js/data-config.js
           sed -i "s/PLACEHOLDER_REPO_NAME/$REPO_NAME/g" js/data-config.js
           echo "✅ 仓库信息已注入到 js/data-config.js / Repository info injected into js/data-config.js"
