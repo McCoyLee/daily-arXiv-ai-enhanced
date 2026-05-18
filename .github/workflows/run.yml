@@ -261,6 +261,21 @@ jobs:
           sed -i "s/repoName: '[^']*'/repoName: '$REPO_NAME'/g" js/data-config.js
           sed -i "s/PLACEHOLDER_REPO_OWNER/$REPO_OWNER/g" js/data-config.js
           sed -i "s/PLACEHOLDER_REPO_NAME/$REPO_NAME/g" js/data-config.js
+
+          # 注入偏好类别 / Inject preferred categories from vars.CATEGORIES
+          CATEGORIES_VAR="${{ vars.CATEGORIES }}"
+          if [ -n "$CATEGORIES_VAR" ]; then
+            # Convert "cs.CV, cs.CL, cs.AI" -> ["cs.CV","cs.CL","cs.AI"]
+            PREF_JSON=$(python3 -c "
+import json, sys
+raw = sys.argv[1]
+cats = [c.strip() for c in raw.split(',') if c.strip()]
+print(json.dumps(cats))
+" "$CATEGORIES_VAR")
+            sed -i "s/preferredCategories: \[\]/preferredCategories: $PREF_JSON/g" js/data-config.js
+            echo "✅ 偏好类别已注入: $PREF_JSON / Preferred categories injected: $PREF_JSON"
+          fi
+
           echo "✅ 仓库信息已注入到 js/data-config.js / Repository info injected into js/data-config.js"
         else
           echo "❌ ERROR: js/data-config.js not found!"
