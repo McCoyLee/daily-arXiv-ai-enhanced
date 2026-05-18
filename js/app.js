@@ -944,16 +944,21 @@ function parseJsonlData(jsonlText, date) {
 
 // 获取所有类别并按偏好排序
 function getAllCategories(data) {
-  const categories = Object.keys(data);
-  const catePaperCount = {};
-
-  categories.forEach(category => {
-    catePaperCount[category] = data[category] ? data[category].length : 0;
-  });
-
+  const allCategories = Object.keys(data);
   const preferred = (typeof DATA_CONFIG !== 'undefined' && Array.isArray(DATA_CONFIG.preferredCategories))
     ? DATA_CONFIG.preferredCategories
     : [];
+
+  // When the user has declared preferred categories, restrict the filter bar
+  // to those only — otherwise show every primary category that appears.
+  const categories = preferred.length > 0
+    ? allCategories.filter(c => preferred.includes(c))
+    : allCategories;
+
+  const catePaperCount = {};
+  categories.forEach(category => {
+    catePaperCount[category] = data[category] ? data[category].length : 0;
+  });
 
   return {
     sortedCategories: categories.sort((a, b) => {
