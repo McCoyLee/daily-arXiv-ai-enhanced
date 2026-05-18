@@ -27,6 +27,12 @@ const DATA_CONFIG = {
     dataBranch: 'data',
 
     /**
+     * Preferred arXiv categories (ordered, injected by CI from vars.CATEGORIES)
+     * These are shown first in the category filter bar.
+     */
+    preferredCategories: [],
+
+    /**
      * Get the base URL for raw GitHub content from data branch
      * @returns {string} Base URL for raw GitHub content
      */

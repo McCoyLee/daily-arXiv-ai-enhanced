@@ -946,13 +946,22 @@ function parseJsonlData(jsonlText, date) {
 function getAllCategories(data) {
   const categories = Object.keys(data);
   const catePaperCount = {};
-  
+
   categories.forEach(category => {
     catePaperCount[category] = data[category] ? data[category].length : 0;
   });
-  
+
+  const preferred = (typeof DATA_CONFIG !== 'undefined' && Array.isArray(DATA_CONFIG.preferredCategories))
+    ? DATA_CONFIG.preferredCategories
+    : [];
+
   return {
     sortedCategories: categories.sort((a, b) => {
+      const ai = preferred.indexOf(a);
+      const bi = preferred.indexOf(b);
+      if (ai !== -1 && bi !== -1) return ai - bi;
+      if (ai !== -1) return -1;
+      if (bi !== -1) return 1;
       return a.localeCompare(b);
     }),
     categoryCounts: catePaperCount
