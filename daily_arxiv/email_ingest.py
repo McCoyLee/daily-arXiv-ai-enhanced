@@ -23,6 +23,10 @@ from typing import Dict, Iterable, List, Optional, Tuple
 
 
 ARXIV_ID_RE = re.compile(r"arXiv:\s*(\d{4}\.\d{4,5})(v\d+)?", re.IGNORECASE)
+# Block-start: arXiv: must be at the very beginning of the line (no leading
+# spaces).  This prevents false splits on in-text citations like
+# "[Smith, arXiv:2603.15792]" or indented abstract references.
+BLOCK_START_RE = re.compile(r"^arXiv:\d{4}\.\d{4,5}", re.IGNORECASE)
 SEPARATOR_RE = re.compile(r"^-{20,}\s*$")
 ABS_URL_RE = re.compile(r"https?://arxiv\.org/abs/(\d{4}\.\d{4,5})", re.IGNORECASE)
 
@@ -89,11 +93,16 @@ def _get_body(msg: email.message.Message) -> str:
 
 
 def _split_blocks(body: str) -> List[str]:
-    """Split mail body into per-paper blocks keyed by arXiv: id lines."""
+    """Split mail body into per-paper blocks keyed by arXiv: id lines.
+
+    Only lines where 'arXiv:' is at column 0 are treated as block starts.
+    In-text citations like '[Smith, arXiv:2603.15792]' or indented abstract
+    references are intentionally ignored.
+    """
     lines = body.splitlines()
     starts: List[int] = []
     for i, line in enumerate(lines):
-        if ARXIV_ID_RE.search(line):
+        if BLOCK_START_RE.match(line):
             starts.append(i)
     blocks: List[str] = []
     for idx, start in enumerate(starts):
