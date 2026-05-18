@@ -951,9 +951,13 @@ function getAllCategories(data) {
 
   // When the user has declared preferred categories, restrict the filter bar
   // to those only — otherwise show every primary category that appears.
-  const categories = preferred.length > 0
-    ? allCategories.filter(c => preferred.includes(c))
-    : allCategories;
+  // Fallback: if no preferred category matches the data, show everything so
+  // the page is still usable.
+  let categories = allCategories;
+  if (preferred.length > 0) {
+    const filtered = allCategories.filter(c => preferred.includes(c));
+    if (filtered.length > 0) categories = filtered;
+  }
 
   const catePaperCount = {};
   categories.forEach(category => {
