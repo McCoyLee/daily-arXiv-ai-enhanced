@@ -272,7 +272,7 @@ raw = sys.argv[1]
 cats = [c.strip() for c in raw.split(',') if c.strip()]
 print(json.dumps(cats))
 " "$CATEGORIES_VAR")
-            sed -i "s/preferredCategories: \[\]/preferredCategories: $PREF_JSON/g" js/data-config.js
+            sed -i "s/preferredCategories: \[[^]]*\]/preferredCategories: $PREF_JSON/g" js/data-config.js
             echo "✅ 偏好类别已注入: $PREF_JSON / Preferred categories injected: $PREF_JSON"
           fi
 
