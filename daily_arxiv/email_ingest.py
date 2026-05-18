@@ -204,6 +204,12 @@ def _parse_block(block: str) -> Optional[Dict]:
     summary = re.sub(r"\s+", " ", abstract_text).strip()
 
     if not title or not summary:
+        print(
+            f"[WARN] Skipping arXiv:{arxiv_id} -- missing "
+            f"{'title' if not title else ''}{' and ' if not title and not summary else ''}"
+            f"{'summary' if not summary else ''}",
+            file=sys.stderr,
+        )
         return None
 
     return {

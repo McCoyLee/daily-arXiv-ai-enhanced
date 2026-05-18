@@ -20,6 +20,18 @@ if __name__ == "__main__":
         for line in f:
             data.append(json.loads(line))
 
+    # Drop items missing fields required by the template; log so we can debug
+    # malformed entries without aborting the whole markdown build.
+    required_top_fields = ["title", "authors", "summary", "abs", "categories"]
+    clean_data = []
+    for item in data:
+        missing = [k for k in required_top_fields if not item.get(k)]
+        if missing or not item.get("categories"):
+            print(f"Skipping item id={item.get('id', '?')} due to missing fields: {missing}")
+            continue
+        clean_data.append(item)
+    data = clean_data
+
     categories = set([item["categories"][0] for item in data])
     template = open("paper_template.md", "r").read()
     categories = sorted(categories, key=rank)
