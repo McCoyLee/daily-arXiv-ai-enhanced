@@ -30,7 +30,7 @@ const DATA_CONFIG = {
      * Preferred arXiv categories (ordered, injected by CI from vars.CATEGORIES)
      * These are shown first in the category filter bar.
      */
-    preferredCategories: ['stat.ME', 'cs.AI', 'cs.CL', 'cs.IR', 'math-ph', 'math.ST'],
+    preferredCategories: ["cs.AI", "cs.CL", "cs.DB", "cs.LG", "stat.ME", "math-ph", "math.ST"],
 
     /**
      * Get the base URL for raw GitHub content from data branch
