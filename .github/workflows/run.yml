@@ -266,12 +266,7 @@ jobs:
           CATEGORIES_VAR="${{ vars.CATEGORIES }}"
           if [ -n "$CATEGORIES_VAR" ]; then
             # Convert "cs.CV, cs.CL, cs.AI" -> ["cs.CV","cs.CL","cs.AI"]
-            PREF_JSON=$(python3 -c "
-import json, sys
-raw = sys.argv[1]
-cats = [c.strip() for c in raw.split(',') if c.strip()]
-print(json.dumps(cats))
-" "$CATEGORIES_VAR")
+            PREF_JSON=$(python3 -c 'import json,sys; print(json.dumps([c.strip() for c in sys.argv[1].split(",") if c.strip()]))' "$CATEGORIES_VAR")
             sed -i "s/preferredCategories: \[[^]]*\]/preferredCategories: $PREF_JSON/g" js/data-config.js
             echo "✅ 偏好类别已注入: $PREF_JSON / Preferred categories injected: $PREF_JSON"
           fi
