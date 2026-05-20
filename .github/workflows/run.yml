@@ -47,6 +47,7 @@ jobs:
             export ARXIV_EMAIL_SUBJECT_KEYWORD="${{ vars.ARXIV_EMAIL_SUBJECT_KEYWORD }}"
             export INCLUDE_REPLACEMENTS="${{ vars.INCLUDE_REPLACEMENTS }}"
             export INCLUDE_CROSS_LISTINGS="${{ vars.INCLUDE_CROSS_LISTINGS }}"
+            export CATEGORIES="${{ vars.CATEGORIES }}"
 
             python daily_arxiv/email_ingest.py \
                 --date "$today" \
