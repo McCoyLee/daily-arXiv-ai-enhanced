@@ -336,6 +336,11 @@ def main():
     include_replacements = _env_bool("INCLUDE_REPLACEMENTS", False)
     include_cross = _env_bool("INCLUDE_CROSS_LISTINGS", True)
 
+    # Primary-category whitelist: only keep papers whose categories[0] is in
+    # CATEGORIES (same env var used by to_md). Empty/unset = no filtering.
+    raw_cats = os.environ.get("CATEGORIES", "").strip()
+    preferred_primary = {c.strip() for c in raw_cats.split(",") if c.strip()}
+
     msgs = fetch_emails(target_date)
     if not msgs:
         print("[ERROR] No arXiv mailing list emails found in the search window.", file=sys.stderr)
@@ -357,13 +362,26 @@ def main():
     merged = _merge_items(all_items)
 
     filtered: List[Dict] = []
+    dropped_primary = 0
     for it in merged:
         st = it.get("source_type", "new")
         if st == "replacement" and not include_replacements:
             continue
         if st == "cross-listing" and not include_cross:
             continue
+        if preferred_primary:
+            cats = it.get("categories") or []
+            if not cats or cats[0] not in preferred_primary:
+                dropped_primary += 1
+                continue
         filtered.append(it)
+
+    if preferred_primary:
+        print(
+            f"[INFO] Primary-category whitelist active ({sorted(preferred_primary)}): "
+            f"dropped {dropped_primary} papers, kept {len(filtered)}",
+            file=sys.stderr,
+        )
 
     if not filtered:
         print("[ERROR] Parsed 0 papers from emails. Check ARXIV_EMAIL_FROM / SUBJECT_KEYWORD or mailbox state.", file=sys.stderr)
